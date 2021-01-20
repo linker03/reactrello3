@@ -1,13 +1,12 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { combineReducers, configureStore, createSlice } from '@reduxjs/toolkit';
 import { ICard, ICommentStorage, IParams } from '../typescript-stuff/interface';
 
 interface IInitialState {
   cards: ICard[];
-  comments: ICommentStorage;
   params: IParams;
 }
 
-const initialState: IInitialState = {
+const cardInitialState: IInitialState = {
   cards: [
     {
       id: 0,
@@ -37,40 +36,39 @@ const initialState: IInitialState = {
       commentsArray: [4],
     },
   ],
-  comments: {
-    0: { id: 0, author: 'ME', text: 'hello, this is comment' },
-    1: { id: 1, author: 'ME', text: 'hello, this is second comment' },
-    2: { id: 2, author: 'ME', text: 'hello, this is third comment' },
-    3: { id: 3, author: 'ME', text: 'hello, this is fourth comment' },
-    4: { id: 4, author: 'ME', text: 'hello, this is fifth comment' },
-    allIds: [0, 1, 2, 3, 4],
-  },
   params: {
     author: 'ME',
   },
 };
 
-const rootReducer = createSlice({
-  name: 'rootReducer',
-  initialState: initialState,
+const commentsInitialState: ICommentStorage = {
+  0: { id: 0, author: 'ME', text: 'hello, this is comment' },
+  1: { id: 1, author: 'ME', text: 'hello, this is second comment' },
+  2: { id: 2, author: 'ME', text: 'hello, this is third comment' },
+  3: { id: 3, author: 'ME', text: 'hello, this is fourth comment' },
+  4: { id: 4, author: 'ME', text: 'hello, this is fifth comment' },
+  allIds: [0, 1, 2, 3, 4],
+};
+
+const cardReducer = createSlice({
+  name: 'cardReducer',
+  initialState: cardInitialState,
   reducers: {
     addCard(state, action) {
       state.cards.push(action.payload);
     },
     editCard(state, action) {
       console.log(state, action);
-      state.cards = [
-        ...state.cards.map((item) => {
-          if (item.id === action.payload.id) {
-            return {
-              ...item,
-              title: action.payload.title,
-              body: action.payload.body,
-            };
-          }
-          return item;
-        }),
-      ];
+      state.cards = state.cards.map((item) => {
+        if (item.id === action.payload.id) {
+          return {
+            ...item,
+            title: action.payload.title,
+            body: action.payload.body,
+          };
+        }
+        return item;
+      });
     },
     deleteCard(state, action) {
       return {
@@ -79,29 +77,25 @@ const rootReducer = createSlice({
       };
     },
     addComment(state, action) {
-      let newId = Date.now();
-      let newComment = {
-        id: newId,
-        author: action.payload.author,
-        text: action.payload.text,
-      };
+      console.log('im in cards');
 
       const newCards = state.cards.map((item) => {
         if (item.id === action.payload.cardId) {
-          return { ...item, commentsArray: item.commentsArray.concat([newId]) };
+          return {
+            ...item,
+            commentsArray: item.commentsArray.concat([
+              action.payload.commentId,
+            ]),
+          };
         }
         return item;
       });
       return {
         ...state,
         cards: newCards,
-        comments: { ...state.comments, [newId]: newComment },
       };
     },
-    editComment(state, action) {
-      state.comments[action.payload.commentId].text =
-        action.payload.commentText;
-    },
+
     deleteComment(state, action) {
       return {
         ...state,
@@ -124,8 +118,34 @@ const rootReducer = createSlice({
   },
 });
 
+const commentReducer = createSlice({
+  name: 'commentReducer',
+  initialState: commentsInitialState,
+  reducers: {
+    editComment(state, action) {
+      state[action.payload.commentId].text = action.payload.commentText;
+    },
+  },
+  extraReducers: {
+    [cardReducer.actions.addComment.type](state, action) {
+      console.log('Im in comments', state, action);
+      let newComment = {
+        id: action.payload.commentId,
+        author: action.payload.author,
+        text: action.payload.text,
+      };
+      return { ...state, [action.payload.commentId]: newComment };
+    },
+  },
+});
+
+const rootReducer = combineReducers({
+  cards: cardReducer.reducer,
+  comments: commentReducer.reducer,
+});
+
 export const store = configureStore({
-  reducer: rootReducer.reducer,
+  reducer: rootReducer,
 });
 
 export const {
@@ -133,7 +153,9 @@ export const {
   editCard,
   deleteCard,
   addComment,
-  editComment,
+
   deleteComment,
   addAuthor,
-} = rootReducer.actions;
+} = cardReducer.actions;
+
+export const { editComment } = commentReducer.actions;

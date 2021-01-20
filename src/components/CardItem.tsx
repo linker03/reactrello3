@@ -2,7 +2,6 @@ import React, { Fragment, useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import CardModal from './Modal';
 import ModalWrapper from './Modal_wrapper';
-// import CommentItem from './Comment-item';
 import {
   ICardDenormalized,
   IComment,
@@ -125,12 +124,17 @@ interface ICardItemProps {
 }
 
 type editCardArg = { id: number; title: string; body: string };
-type addCommentArg = { cardId: number; text: string; author: string };
+type addCommentArg = {
+  commentId: number;
+  cardId: number;
+  text: string;
+  author: string;
+};
 
 interface IDispathProps {
   deleteCard: (id: number) => void;
   editCard: ({ id, title, body }: editCardArg) => void;
-  addComment: ({ cardId, text, author }: addCommentArg) => void;
+  addComment: ({ commentId, cardId, text, author }: addCommentArg) => void;
 }
 
 interface IMapProps {
@@ -217,7 +221,12 @@ const CardItem: React.FC<Props> = ({
   };
 
   const createCommentHandler = () => {
-    const args = { cardId: card.id, text: state.comment, author: author };
+    const args = {
+      commentId: Date.now(),
+      cardId: card.id,
+      text: state.comment,
+      author: author,
+    };
     addComment(args);
     setState((state) => ({ ...state, comment: '' }));
   };
@@ -286,7 +295,7 @@ const mapDispatchToProps: IDispathProps = {
 };
 
 const mapStateToProps = (state: any) => ({
-  author: state.params.author,
+  author: state.cards.params.author,
 });
 
 export default connect<IMapProps, IDispathProps, ICardItemProps>(

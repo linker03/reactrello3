@@ -102,8 +102,8 @@ const App: React.FC<Props> = ({ cards, comments, params, addAuthor }) => {
 
 const mapStateToProps = (state: any) => {
   return {
-    cards: state.cards,
-    params: state.params,
+    cards: state.cards.cards,
+    params: state.cards.params,
     comments: state.comments,
   };
 };
